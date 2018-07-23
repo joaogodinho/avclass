@@ -17,6 +17,8 @@ import os
 default_alias_file = "data/default.aliases"
 # Default generic tokens file
 default_gen_file = "data/default.generics"
+# Default malware classes file
+default_class_file = "data/default.classes"
 
 def guess_hash(h):
     '''Given a hash string, guess the hash type based on the string length'''
@@ -46,7 +48,7 @@ def main(args):
         hash_type = guess_hash(gt_dict.keys()[0])
 
     # Create AvLabels object
-    av_labels = AvLabels(args.gen, args.alias, args.av)
+    av_labels = AvLabels(args.gen, args.alias, args.av, args.cls)
 
     # Build list of input files
     # NOTE: duplicate input files are not removed
@@ -370,6 +372,10 @@ if __name__=='__main__':
     argparser.add_argument('-gen',
         help='file with generic tokens.',
         default = default_gen_file)
+
+    argparser.add_argument('-cls',
+        help='file with class tokens.',
+        default = default_class_file)
 
     argparser.add_argument('-av',
         help='file with list of AVs to use')

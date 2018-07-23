@@ -17,7 +17,7 @@ class AvLabels:
     Class to operate on AV labels, 
     such as extracting the most likely family name.
     '''
-    def __init__(self, gen_file = None, alias_file = None, av_file = None):
+    def __init__(self, gen_file = None, alias_file = None, av_file = None, class_file = None):
 
         # Read generic token set from file
         self.gen_set = self.read_generics(gen_file) if gen_file else set()
@@ -27,6 +27,20 @@ class AvLabels:
 
         # Read AV engine set from file
         self.avs = self.read_avs(av_file) if av_file else None
+
+        # Read malware classes set from file
+        self.class_set = self.read_classes(class_file) if class_file else None
+
+    @staticmethod
+    def read_classes(clfile):
+        '''Read Classes from from given file'''
+        class_set = set()
+        with open(clfile) as class_fd:
+            for line in class_fd:
+                if line.startswith('#') or line == '\n':
+                    continue
+                class_set.add(line.strip())
+        return class_set
 
     @staticmethod
     def read_aliases(alfile):
@@ -178,32 +192,33 @@ class AvLabels:
             token = token.lower()
 
             # Remove digits at the end
-            end_len = len(re.findall("\d*$", token)[0])
-            if end_len:
-                token = token[:-end_len]
+            # end_len = len(re.findall("\d*$", token)[0])
+            # if end_len:
+            #     token = token[:-end_len]
 
             # Ignore short token
-            if len(token) < 4:
-                continue
-
-            # Remove generic tokens
-            if token in self.gen_set:
-                continue
+            # if len(token) < 4:
+            #     continue
 
             # Ignore token if prefix of a hash of the sample 
             # Most AVs use MD5 prefixes in labels, 
             # but we check SHA1 and SHA256 as well
-            hash_token = False
-            for hash_str in hashes:
-                if hash_str[0:len(token)] == token:
-                  hash_token = True
-                  break
-            if hash_token:
-                continue
+            # hash_token = False
+            # for hash_str in hashes:
+            #     if hash_str[0:len(token)] == token:
+            #       hash_token = True
+            #       break
+            # if hash_token:
+            #     continue
 
             # Replace alias
+            # Aliases are now the malware classes
             token = self.aliases_map[token] if token in self.aliases_map \
                                             else token
+
+            # Keep only malware classes token
+            if token not in self.class_set:
+                continue
 
             # Add token
             ret.append(token)
@@ -276,10 +291,11 @@ class AvLabels:
         # Delete the tokens appearing only in one AV, add rest to output
         sorted_dict = OrdDict()
         for t, c in sorted_tokens:
-            if c > 1:
-                sorted_dict[t] = c
-            else:
-                break
+            sorted_dict[t] = c
+            # if c > 1:
+            #     sorted_dict[t] = c
+            # else:
+            #     break
         
         return sorted_dict
 
